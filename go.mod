@@ -1,3 +1,3 @@
-module gopkg.in/inf.v0
+module github.com/ChannelMeter/inf
 
 go 1.20
