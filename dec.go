@@ -468,6 +468,7 @@ func (x *Dec) Format(s fmt.State, ch rune) {
 }
 
 func (z *Dec) scan(r io.RuneScanner) (*Dec, error) {
+	var exp *Dec
 	unscaled := make([]byte, 0, 256) // collects chars of unscaled as bytes
 	dp, dg := -1, -1                 // indexes of decimal point, first digit
 loop:
@@ -496,6 +497,12 @@ loop:
 			if dg == -1 {
 				dg = len(unscaled)
 			}
+		case ch == 'e':
+			exp = new(Dec);
+			if _, err := exp.scan(r); err != nil {
+				return nil, err
+			}
+			continue
 		default:
 			r.UnreadRune()
 			break loop
@@ -511,6 +518,11 @@ loop:
 		z.SetScale(0)
 	}
 	_, ok := z.UnscaledBig().SetString(string(unscaled), 10)
+	if exp != nil {
+		unscaled, _ := exp.Unscaled();
+		exp = NewDec(1, Scale(-1*unscaled));
+		z = z.Mul(z, exp);
+	}
 	if !ok {
 		return nil, fmt.Errorf("invalid decimal: %s", string(unscaled))
 	}
